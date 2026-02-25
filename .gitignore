@@ -1,0 +1,46 @@
+
+---
+
+## `.gitignore`
+
+```gitignore
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# Data (usually large / private)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Outputs & models (optional: ignore generated artifacts)
+outputs/*
+models/*
+!outputs/.gitkeep
+!models/.gitkeep
