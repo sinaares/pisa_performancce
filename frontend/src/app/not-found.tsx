@@ -1,0 +1,18 @@
+import Link from "next/link";
+
+export default function NotFound() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold mb-2">404</h1>
+        <p className="text-muted-foreground mb-4">Page not found</p>
+        <Link
+          href="/students"
+          className="text-sm underline underline-offset-4 hover:text-foreground"
+        >
+          Back to students
+        </Link>
+      </div>
+    </div>
+  );
+}

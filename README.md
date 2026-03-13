@@ -1,191 +1,190 @@
-PISA Performance Project (PyCharm + UI/DB-ready)
-================================================
+# PISA Performance
 
-This project is a refactor of a Jupyter Notebook into a clean Python package structure so you can later add:
-- UI (Streamlit / FastAPI / PyQt)
-- Database (SQLite/PostgreSQL)
-- Model saving/loading, prediction history, etc.
+Predict and explain student math performance using PISA indicators. A full-stack application that wraps a machine learning pipeline (Ridge + XGBoost with SHAP explanations) into a teacher-facing web interface.
 
-IMPORTANT:
-- The notebook logic/order is preserved.
-- The code is split into step files (step00_..., step01_..., ...).
-- Make sure your package init files are named: __init__.py (NOT init.py)
+## Architecture
 
-------------------------------------------------------------
-1) Project Structure
-------------------------------------------------------------
+```
+Frontend (Next.js)  →  Backend (FastAPI)  →  ML Pipeline (scikit-learn + XGBoost)
+                                           →  Groq LLM (chat)
+                                           →  Supabase (PostgreSQL + Auth)
+```
 
-pisa-performance/
-  data/
-    raw/                     (input data .sav or .parquet goes here)
-    processed/               (optional)
-  notebooks/
-    bitirme_demo2.ipynb      (original notebook for reference)
-  models/                    (optional saved models)
-  outputs/                   (optional reports/figures)
-  src/
-    pisa_app/
-      __init__.py
-      ml/
-        __init__.py
-        run_pipeline.py              (runs the full pipeline)
-        convert_sav_to_parquet.py    (converts .sav -> .parquet)
-        step00_setup.py
-        step01_load_data.py
-        step02_quick_eda.py
-        step03_merge.py
-        step04_feature_groups.py
-        step05_build_xy.py
-        step06_split.py
-        step07_train_ridge.py
-        step08_train_xgb.py
-        step09_shap_values.py
-        step10_shap_plots.py
-  requirements.txt
-  .gitignore
-  README.txt
+- **Frontend**: Next.js 16, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: FastAPI with JWT auth, Supabase client, Groq LLM integration
+- **ML Pipeline**: Ridge regression + XGBoost trained on PISA 2022 data, SHAP TreeExplainer for feature attributions
+- **Database**: Supabase (PostgreSQL with Row Level Security)
+- **Chat**: Groq API (`llama-3.3-70b-versatile`) for AI-powered student analysis
 
-------------------------------------------------------------
-2) Python Version
-------------------------------------------------------------
+## Features
 
-Recommended Python: 3.11 or 3.12
-(Using very new versions like 3.14 can break packages like xgboost/shap/pyreadstat.)
+- Teacher authentication (signup/login)
+- Student CRUD with 40+ PISA indicator profile
+- ML predictions with dual-model scoring (Ridge + XGBoost)
+- SHAP-based explanations showing positive/negative factors
+- AI chat grounded in student data and predictions
+- Notes with inline edit/delete
+- Auto-generated summaries from chat history
+- Timeline view of all student activity
+- Field validation with range warnings
+- Responsive design (desktop + tablet)
 
-------------------------------------------------------------
-3) Setup Virtual Environment (Windows PowerShell)
-------------------------------------------------------------
+## Local Setup
 
-Open PowerShell in the project root folder (pisa-performance/) and run:
+### Prerequisites
 
-  py -3.11 -m venv .venv
-  .\.venv\Scripts\Activate.ps1
-  python -m pip install -U pip setuptools wheel
-  pip install -r requirements.txt
+- Python 3.11 or 3.12
+- Node.js 18+
+- A Supabase project (free tier works)
+- PISA data files (`.parquet` format) in `data/raw/`
 
-Check that you are using the venv:
+### 1. Clone and install
 
-  where python
-  python --version
+```bash
+# Python dependencies
+python -m venv .venv
+source .venv/bin/activate  # or .venv\Scripts\Activate.ps1 on Windows
+pip install -r backend/requirements.txt
 
-You should see something like:
-  ...\pisa-performance\.venv\Scripts\python.exe
+# Frontend dependencies
+cd frontend
+npm install
+cd ..
+```
 
-------------------------------------------------------------
-4) PyCharm Setup (Important)
-------------------------------------------------------------
+### 2. Environment variables
 
-A) Select interpreter:
-   Settings -> Project -> Python Interpreter
-   Choose: pisa-performance\.venv\Scripts\python.exe
+Copy the example files and fill in your values:
 
-B) Mark src as Sources Root:
-   Right click "src" -> Mark Directory as -> Sources Root
+```bash
+cp backend/.env.example backend/.env
+```
 
-C) Ensure package init files are correct:
-   src\pisa_app\__init__.py
-   src\pisa_app\ml\__init__.py
+Edit `backend/.env`:
 
-------------------------------------------------------------
-5) Data Files
-------------------------------------------------------------
+| Variable | Description |
+|---|---|
+| `SUPABASE_URL` | Your Supabase project URL (Settings > API) |
+| `SUPABASE_KEY` | Service-role key (Settings > API > service_role) |
+| `SUPABASE_JWT_SECRET` | JWT secret (Settings > API > JWT Secret) |
+| `GROQ_API_KEY` | Groq API key (optional, enables AI chat) |
+| `FRONTEND_URL` | Frontend origin for CORS (default: `http://localhost:3000`) |
+| `ML_MODEL_VERSION` | Version tag stored with predictions (default: `v1`) |
+| `DEBUG` | Set to `true` for development (default: `false`) |
 
-This project uses PISA student and school questionnaire data.
+For the frontend, create `frontend/.env.local`:
 
-Option A (Recommended): Start from .sav files
----------------------------------------------
-Place these files in:
+```
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
 
-  data/raw/CY08MSP_STU_QQQ.sav
-  data/raw/CY08MSP_SCH_QQQ.sav
+### 3. Database migrations
 
-Convert them (one time):
+Run the migration SQL in your Supabase dashboard:
 
-  python src\pisa_app\ml\convert_sav_to_parquet.py
+1. Go to **SQL Editor** in the Supabase dashboard
+2. Paste the contents of `backend/migrations/001_initial_schema.sql`
+3. Click **Run**
 
-After conversion you will have:
+This creates all 9 tables with RLS policies, indexes, and triggers.
 
-  data/raw/CY08MSP_STU_QQQ.parquet
-  data/raw/CY08MSP_SCH_QQQ.parquet
+### 4. Data files
 
-Option B: If you already have .parquet
---------------------------------------
-Place directly:
+Place the PISA data files in the project:
 
-  data/raw/CY08MSP_STU_QQQ.parquet
-  data/raw/CY08MSP_SCH_QQQ.parquet
+```
+data/raw/CY08MSP_STU_QQQ.parquet
+data/raw/CY08MSP_SCH_QQQ.parquet
+```
 
-Quick check:
+If you have `.sav` files instead, convert them first:
 
-  dir data\raw
+```bash
+PYTHONPATH=src python src/pisa_app/ml/convert_sav_to_parquet.py
+```
 
-------------------------------------------------------------
-6) Run the Full Pipeline (All steps)
-------------------------------------------------------------
+### 5. Start the backend
 
-Run from the project root:
+```bash
+cd backend
+PYTHONPATH=../src:. uvicorn app.main:app --reload --port 8000
+```
 
-PowerShell:
+The API is available at `http://localhost:8000`. Check health: `http://localhost:8000/health`
 
-  $env:PYTHONPATH="src"
-  python -m pisa_app.ml.run_pipeline
+### 6. Start the frontend
 
-Success looks like:
-- Merge/feature selection logs
-- Ridge metrics (R², MAE, RMSE)
-- XGBoost metrics
-- SHAP computations
-- Plots (depending on your PyCharm settings)
+```bash
+cd frontend
+npm run dev
+```
 
-------------------------------------------------------------
-7) Run in PyCharm (One-click)
-------------------------------------------------------------
+Open `http://localhost:3000` in your browser.
 
-Run -> Edit Configurations -> + -> Python
+### 7. Seed demo data (optional)
 
-Choose: "Module name"
+```bash
+PYTHONPATH=src:backend python scripts/seed_demo_data.py
+```
 
-  Module name: pisa_app.ml.run_pipeline
-  Working directory: C:\Users\<your_user>\PycharmProjects\pisa-performance
-  Environment variables: PYTHONPATH=src
+This creates a demo teacher (`demo@pisaperformance.test` / `demo123456`) with 4 sample students including filled profiles, predictions, and notes.
 
-Press Run.
+## Docker
 
-------------------------------------------------------------
-8) Common Errors and Fixes
-------------------------------------------------------------
+```bash
+# Build and run the backend
+docker-compose up --build
 
-A) "attempted relative import with no known parent package"
-   Fix: run as module:
-     $env:PYTHONPATH="src"
-     python -m pisa_app.ml.run_pipeline
+# The backend will be available at http://localhost:8000
+```
 
-B) "FileNotFoundError data\raw\...parquet"
-   Fix: confirm files exist:
-     dir data\raw
-   Make sure filenames match exactly.
+The frontend is deployed separately (Vercel, Netlify, or any static host). Set `NEXT_PUBLIC_API_URL` to point to the backend.
 
-C) "ModuleNotFoundError: pyreadstat / pyarrow / xgboost / shap"
-   Fix:
-     pip install pyreadstat pyarrow xgboost shap
+## Project Structure
 
-D) Plots not showing in PyCharm
-   Try enabling Scientific Mode in PyCharm or add plt.show() where needed.
+```
+├── backend/
+│   ├── app/
+│   │   ├── auth/          # JWT auth, signup/login
+│   │   ├── students/      # Student CRUD, profiles, validation
+│   │   ├── predictions/   # ML prediction endpoints
+│   │   ├── explanations/  # SHAP explanation endpoints
+│   │   ├── chat/          # Groq LLM chat with rate limiting
+│   │   ├── notes/         # Teacher notes CRUD
+│   │   ├── summaries/     # AI-generated summaries
+│   │   ├── config.py      # Pydantic settings
+│   │   ├── database.py    # Supabase client
+│   │   └── main.py        # FastAPI app + CORS + routers
+│   ├── migrations/        # SQL schema
+│   ├── ml_interface.py    # ML pipeline wrapper
+│   └── requirements.txt
+├── frontend/
+│   └── src/
+│       ├── app/           # Next.js pages (App Router)
+│       ├── components/    # React components
+│       ├── hooks/         # Custom hooks
+│       └── lib/           # API client, types, auth, fields
+├── src/
+│   └── pisa_app/ml/       # ML pipeline (training steps)
+├── data/raw/              # PISA data files
+├── scripts/               # Seed scripts
+└── docker-compose.yml
+```
 
-E) SHAP too slow / memory issues
-   Reduce sample size in step09_shap_values.py:
-     X_valid_sample = X_valid.sample(500, random_state=42)
+## API Endpoints
 
-------------------------------------------------------------
-9) Next Steps (UI + Database)
-------------------------------------------------------------
-
-Now that the pipeline runs, recommended next steps:
-1) Save trained models to models/ (joblib)
-2) Create a predict_api.py wrapper so UI can call one function
-3) Add SQLite database to store predictions and inputs
-4) Build UI (Streamlit is fastest)
-
-Example future commands:
-  python -m pisa_app.ml.run_pipeline
-  streamlit run src\pisa_app\ui\app.py
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/auth/signup` | Create account |
+| POST | `/api/auth/login` | Login |
+| GET | `/api/auth/me` | Current user |
+| GET/POST | `/api/students` | List / create students |
+| GET/PUT/DELETE | `/api/students/{id}` | Student CRUD |
+| PUT | `/api/students/{id}/profile` | Update PISA indicators |
+| GET | `/api/students/{id}/validation` | Check profile completeness |
+| POST | `/api/students/{id}/predict` | Generate prediction |
+| GET | `/api/students/{id}/predictions` | Prediction history |
+| GET | `/api/students/{id}/explanations/latest` | Latest SHAP explanation |
+| POST/GET | `/api/chat` | Send message / history |
+| POST/GET/PUT/DELETE | `/api/students/{id}/notes` | Notes CRUD |
+| GET | `/api/students/{id}/summaries` | AI summaries |
