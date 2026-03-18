@@ -1,7 +1,7 @@
 from groq import Groq
 
 from ..config import get_settings
-from ..database import get_supabase
+from ..database import get_supabase, safe_data
 
 TABLE = "student_summaries"
 
@@ -16,7 +16,7 @@ def _call_groq(messages: list[dict]) -> str:
     settings = get_settings()
     client = Groq(api_key=settings.groq_api_key)
     resp = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-120b",
         messages=messages,
         temperature=0.3,
         max_tokens=512,
@@ -52,14 +52,14 @@ def regenerate_summary(teacher_id: str, student_id: str) -> dict:
     sb = get_supabase()
 
     # verify ownership
-    student = (
+    student = safe_data(
         sb.table("students")
         .select("id")
         .eq("id", student_id)
         .eq("teacher_id", teacher_id)
         .maybe_single()
         .execute()
-    ).data
+    )
     if not student:
         raise ValueError("Student not found")
 

@@ -4,7 +4,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "src"))
 
 from ml_interface import REQUIRED_FIELDS
-from ..database import get_supabase
+from ..database import get_supabase, safe_data
 from .models import StudentCreate, StudentUpdate
 
 
@@ -34,29 +34,29 @@ def get_student(teacher_id: str, student_id: str) -> dict | None:
     """Fetch a student with their profile, latest prediction, and latest explanation."""
     sb = get_supabase()
 
-    student = (
+    student = safe_data(
         sb.table("students")
         .select("*")
         .eq("id", student_id)
         .eq("teacher_id", teacher_id)
         .maybe_single()
         .execute()
-    ).data
+    )
     if not student:
         return None
 
     # profile
-    profile = (
+    profile = safe_data(
         sb.table("student_profiles")
         .select("profile_data, updated_at")
         .eq("student_id", student_id)
         .maybe_single()
         .execute()
-    ).data
+    )
     student["profile"] = profile.get("profile_data", {}) if profile else {}
 
     # latest prediction
-    prediction = (
+    prediction = safe_data(
         sb.table("predictions")
         .select("*")
         .eq("student_id", student_id)
@@ -65,12 +65,12 @@ def get_student(teacher_id: str, student_id: str) -> dict | None:
         .limit(1)
         .maybe_single()
         .execute()
-    ).data
+    )
     student["latest_prediction"] = prediction
 
     # latest explanation (via prediction)
     if prediction:
-        explanation = (
+        explanation = safe_data(
             sb.table("explanations")
             .select("*")
             .eq("prediction_id", prediction["id"])
@@ -78,7 +78,7 @@ def get_student(teacher_id: str, student_id: str) -> dict | None:
             .limit(1)
             .maybe_single()
             .execute()
-        ).data
+        )
         student["latest_explanation"] = explanation
     else:
         student["latest_explanation"] = None
@@ -92,14 +92,14 @@ def update_student(teacher_id: str, student_id: str, data: StudentUpdate) -> dic
     updates = data.model_dump(exclude_none=True)
     if not updates:
         # nothing to update, just return the current row
-        return (
+        return safe_data(
             sb.table("students")
             .select("*")
             .eq("id", student_id)
             .eq("teacher_id", teacher_id)
             .maybe_single()
             .execute()
-        ).data
+        )
 
     result = (
         sb.table("students")
@@ -161,25 +161,25 @@ def update_student_profile(
         raise ValueError("; ".join(errors))
 
     # verify the student belongs to this teacher
-    student = (
+    student = safe_data(
         sb.table("students")
         .select("id")
         .eq("id", student_id)
         .eq("teacher_id", teacher_id)
         .maybe_single()
         .execute()
-    ).data
+    )
     if not student:
         raise ValueError("Student not found")
 
     # check if profile exists
-    existing = (
+    existing = safe_data(
         sb.table("student_profiles")
         .select("id, profile_data")
         .eq("student_id", student_id)
         .maybe_single()
         .execute()
-    ).data
+    )
 
     if existing:
         # merge new data into existing profile so partial updates work
@@ -254,24 +254,24 @@ def validate_student_profile(teacher_id: str, student_id: str) -> dict:
     sb = get_supabase()
 
     # verify ownership
-    student = (
+    student = safe_data(
         sb.table("students")
         .select("id")
         .eq("id", student_id)
         .eq("teacher_id", teacher_id)
         .maybe_single()
         .execute()
-    ).data
+    )
     if not student:
         raise ValueError("Student not found")
 
-    profile = (
+    profile = safe_data(
         sb.table("student_profiles")
         .select("profile_data")
         .eq("student_id", student_id)
         .maybe_single()
         .execute()
-    ).data
+    )
 
     profile_data = profile.get("profile_data", {}) if profile else {}
 

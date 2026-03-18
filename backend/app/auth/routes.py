@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 
-from ..database import get_supabase
+from ..database import get_supabase, safe_data
 from .dependencies import get_current_teacher
 
 router = APIRouter()
@@ -73,13 +73,13 @@ def login(body: LoginRequest):
 def me(teacher_id: str = Depends(get_current_teacher)):
     """Return the current teacher's profile from the teachers table."""
     sb = get_supabase()
-    result = (
+    data = safe_data(
         sb.table("teachers")
         .select("*")
         .eq("id", teacher_id)
         .maybe_single()
         .execute()
     )
-    if not result.data:
+    if not data:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Teacher profile not found")
-    return result.data
+    return data

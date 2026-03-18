@@ -1,17 +1,17 @@
-from ..database import get_supabase
+from ..database import get_supabase, safe_data
 
 TABLE = "teacher_notes"
 
 
 def _verify_student(sb, teacher_id: str, student_id: str):
-    student = (
+    student = safe_data(
         sb.table("students")
         .select("id")
         .eq("id", student_id)
         .eq("teacher_id", teacher_id)
         .maybe_single()
         .execute()
-    ).data
+    )
     if not student:
         raise ValueError("Student not found")
 

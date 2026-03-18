@@ -74,13 +74,13 @@ export function ExplanationCards({ explanation }: Props) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {/* Positive factors */}
-      <Card className="border-green-200/60">
+      <Card className="border-green-200/50 shadow-sm">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500" aria-hidden="true" />
-            <span className="text-green-800">Positive Factors</span>
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500 shadow-sm shadow-green-500/30" aria-hidden="true" />
+            <span className="text-green-800 font-semibold">Positive Factors</span>
           </CardTitle>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             These push the predicted score higher
           </p>
         </CardHeader>
@@ -101,13 +101,13 @@ export function ExplanationCards({ explanation }: Props) {
       </Card>
 
       {/* Negative factors */}
-      <Card className="border-amber-200/60">
+      <Card className="border-amber-200/50 shadow-sm">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-500" aria-hidden="true" />
-            <span className="text-amber-800">Negative Factors</span>
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-500 shadow-sm shadow-amber-500/30" aria-hidden="true" />
+            <span className="text-amber-800 font-semibold">Negative Factors</span>
           </CardTitle>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             These pull the predicted score lower
           </p>
         </CardHeader>

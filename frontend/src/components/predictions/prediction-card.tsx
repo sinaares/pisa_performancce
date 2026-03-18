@@ -117,26 +117,26 @@ export function PredictionCard({
   const result = prediction.prediction_result;
 
   return (
-    <Card className="border-primary/20">
+    <Card className="border-primary/15 shadow-md">
       <CardHeader className="flex-row items-center justify-between pb-2">
-        <CardTitle className="text-base">Prediction</CardTitle>
-        <Badge variant="secondary" className="text-xs">
+        <CardTitle className="text-base font-semibold">Prediction</CardTitle>
+        <Badge variant="secondary" className="text-xs font-medium">
           {prediction.model_version}
         </Badge>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-center gap-10 py-2">
+        <div className="flex items-center justify-center gap-12 py-4">
           <div className="text-center">
-            <p className="text-xs text-muted-foreground mb-1">XGBoost</p>
+            <p className="text-xs font-medium text-muted-foreground mb-1.5">XGBoost</p>
             <p
               className={`text-4xl font-bold tracking-tight ${scoreColor(result.xgb_score)}`}
             >
               {result.xgb_score}
             </p>
           </div>
-          <div className="h-10 w-px bg-border" />
+          <div className="h-12 w-px bg-border/60" />
           <div className="text-center">
-            <p className="text-xs text-muted-foreground mb-1">Ridge</p>
+            <p className="text-xs font-medium text-muted-foreground mb-1.5">Ridge</p>
             <p
               className={`text-4xl font-bold tracking-tight ${scoreColor(result.ridge_score)}`}
             >
@@ -145,7 +145,7 @@ export function PredictionCard({
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pt-2 border-t border-border/40">
           <p className="text-xs text-muted-foreground">
             {formatDate(prediction.created_at)}
           </p>

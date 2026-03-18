@@ -19,6 +19,8 @@ def predict(student_id: str, teacher_id: str = Depends(get_current_teacher)):
                 "missing_fields": exc.missing_fields,
             },
         )
+    except RuntimeError as exc:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc))
     except ValueError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
 

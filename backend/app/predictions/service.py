@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "sr
 
 from ml_interface import run_prediction, validate_student_input
 from ..config import get_settings
-from ..database import get_supabase
+from ..database import get_supabase, safe_data
 from ..explanations.service import generate_explanation
 
 TABLE = "predictions"
@@ -24,24 +24,24 @@ class MissingFieldsError(Exception):
 def _load_profile_data(sb, teacher_id: str, student_id: str) -> dict:
     """Load and return the profile_data dict for a student, or raise."""
     # verify student ownership
-    student = (
+    student = safe_data(
         sb.table("students")
         .select("id")
         .eq("id", student_id)
         .eq("teacher_id", teacher_id)
         .maybe_single()
         .execute()
-    ).data
+    )
     if not student:
         raise ValueError("Student not found")
 
-    profile = (
+    profile = safe_data(
         sb.table("student_profiles")
         .select("profile_data")
         .eq("student_id", student_id)
         .maybe_single()
         .execute()
-    ).data
+    )
     if not profile or not profile.get("profile_data"):
         raise MissingFieldsError(list(validate_student_input({})[1]))
 
@@ -89,7 +89,7 @@ def run_student_prediction(teacher_id: str, student_id: str) -> dict:
 
 def get_latest_prediction(teacher_id: str, student_id: str) -> dict | None:
     sb = get_supabase()
-    result = (
+    return safe_data(
         sb.table(TABLE)
         .select("*")
         .eq("student_id", student_id)
@@ -99,7 +99,6 @@ def get_latest_prediction(teacher_id: str, student_id: str) -> dict | None:
         .maybe_single()
         .execute()
     )
-    return result.data
 
 
 def list_predictions(teacher_id: str, student_id: str) -> list[dict]:

@@ -4,7 +4,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "src"))
 
 from ml_interface import run_explanation
-from ..database import get_supabase
+from ..database import get_supabase, safe_data
 
 TABLE = "explanations"
 TOP_N = 5  # number of top factors to pre-compute
@@ -17,25 +17,25 @@ def generate_explanation(
     sb = get_supabase()
 
     # load profile data
-    profile = (
+    profile = safe_data(
         sb.table("student_profiles")
         .select("profile_data")
         .eq("student_id", student_id)
         .maybe_single()
         .execute()
-    ).data
+    )
     if not profile:
         raise ValueError("Student profile not found")
 
     # load prediction
-    prediction = (
+    prediction = safe_data(
         sb.table("predictions")
         .select("prediction_result, created_by")
         .eq("id", prediction_id)
         .eq("created_by", teacher_id)
         .maybe_single()
         .execute()
-    ).data
+    )
     if not prediction:
         raise ValueError("Prediction not found")
 
@@ -71,7 +71,7 @@ def get_latest_explanation(teacher_id: str, student_id: str) -> dict | None:
     sb = get_supabase()
 
     # get the student's latest prediction id
-    prediction = (
+    prediction = safe_data(
         sb.table("predictions")
         .select("id")
         .eq("student_id", student_id)
@@ -80,11 +80,11 @@ def get_latest_explanation(teacher_id: str, student_id: str) -> dict | None:
         .limit(1)
         .maybe_single()
         .execute()
-    ).data
+    )
     if not prediction:
         return None
 
-    result = (
+    return safe_data(
         sb.table(TABLE)
         .select("*")
         .eq("prediction_id", prediction["id"])
@@ -93,7 +93,6 @@ def get_latest_explanation(teacher_id: str, student_id: str) -> dict | None:
         .maybe_single()
         .execute()
     )
-    return result.data
 
 
 def list_explanations(teacher_id: str, student_id: str) -> list[dict]:
